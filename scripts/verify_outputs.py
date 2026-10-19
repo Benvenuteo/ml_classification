@@ -3,17 +3,32 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+from collections import Counter
 from datetime import datetime
 from html.parser import HTMLParser
+from io import BytesIO
 from pathlib import Path
 
 import nbformat
 import numpy as np
 import pandas as pd
+from PIL import Image
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
 from air_quality.data import CLASS_NAMES, TARGET, file_sha256, load_dataset
+from air_quality.reporting import REQUIRED_FIGURES
+
+
+def validate_png(payload: bytes) -> None:
+    """Check PNG structure and decode pixels, catching broken and truncated images."""
+    with Image.open(BytesIO(payload)) as image:
+        assert image.format == "PNG", "Report images must use PNG."
+        assert min(image.size) > 0
+        image.verify()
+    with Image.open(BytesIO(payload)) as image:
+        image.load()
 
 
 class ReportParser(HTMLParser):
@@ -22,6 +37,7 @@ class ReportParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.image_count = 0
+        self.images: list[bytes] = []
         self.ids: set[str] = set()
         self.anchors: set[str] = set()
 
@@ -33,17 +49,22 @@ class ReportParser(HTMLParser):
         if tag == "a" and str(attributes.get("href", "")).startswith("#"):
             self.anchors.add(str(attributes["href"])[1:])
         if tag == "img":
-            assert str(attributes.get("src", "")).startswith("data:image/svg+xml;base64,")
+            source = str(attributes.get("src", ""))
+            prefix = "data:image/png;base64,"
+            assert source.startswith(prefix), "Charts must be embedded PNG images."
             assert attributes.get("alt"), "Every chart needs alternative text."
+            payload = base64.b64decode(source[len(prefix) :], validate=True)
+            validate_png(payload)
+            self.images.append(payload)
             self.image_count += 1
 
 
 def verify(output: Path, notebook_path: Path) -> None:
     """Recompute headline metrics and check that data and numerical code match the run."""
     root = Path(__file__).resolve().parents[1]
-    manifest = json.loads((output / "run_manifest.json").read_text())
-    decisions = json.loads((output / "frozen_decisions.json").read_text())
-    results = json.loads((output / "holdout_metrics.json").read_text())
+    manifest = json.loads((output / "run_manifest.json").read_text(encoding="utf-8"))
+    decisions = json.loads((output / "frozen_decisions.json").read_text(encoding="utf-8"))
+    results = json.loads((output / "holdout_metrics.json").read_text(encoding="utf-8"))
     assert manifest["evaluation_status"] == "completed"
     data_path = root / manifest["config"]["dataset"]
     assert file_sha256(data_path) == manifest["dataset_sha256"]
@@ -119,19 +140,33 @@ def verify(output: Path, notebook_path: Path) -> None:
     assert datetime.fromisoformat(decisions["frozen_at"]) <= datetime.fromisoformat(
         manifest["finished_at"],
     )
-    notebook = nbformat.read(notebook_path, as_version=4)
+    with notebook_path.open(encoding="utf-8") as handle:
+        notebook = nbformat.read(handle, as_version=4)
     nbformat.validate(notebook)
+    notebook_images = []
     for cell in notebook.cells:
         if cell.cell_type == "code":
             assert cell.execution_count is not None, "Notebook must contain executed code cells."
             assert not any(item.output_type == "error" for item in cell.outputs)
+            for item in cell.outputs:
+                if "image/png" in item.get("data", {}):
+                    payload = base64.b64decode(item.data["image/png"], validate=True)
+                    validate_png(payload)
+                    notebook_images.append(payload)
     parser = ReportParser()
-    parser.feed((output / "report.html").read_text())
-    assert parser.image_count >= 10
+    parser.feed((output / "report.html").read_text(encoding="utf-8"))
+    names = list(REQUIRED_FIGURES)
+    if (output / "figures/learning_curve.png").exists():
+        names.append("learning_curve")
+    expected_images = [(output / "figures" / f"{name}.png").read_bytes() for name in names]
+    assert Counter(parser.images) == Counter(expected_images), "HTML charts differ from exports."
+    assert Counter(notebook_images) == Counter(expected_images), (
+        "Notebook charts differ from exports."
+    )
     assert parser.anchors <= parser.ids
     print(
         f"Verified: {len(split)} split rows, {len(predictions)} held-out predictions, "
-        f"{parser.image_count} embedded charts, executed notebook, matching source hashes."
+        f"{parser.image_count} decoded PNG charts in HTML and notebook, matching source hashes."
     )
 
 

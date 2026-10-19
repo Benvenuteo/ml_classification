@@ -9,7 +9,7 @@ porównanie bezpośredniego modelu binarnego z agregacją prawdopodobieństw czt
 **[Raport HTML](reports/report.html)** · **[Metodologia](docs/methodology.md)** ·
 **[Wyniki maszynowe](reports/holdout_metrics.json)** · **[Wnioski](reports/study_summary.md)**
 
-Raport HTML należy pobrać i otworzyć w przeglądarce. Zawiera wszystkie wykresy,
+Raport HTML należy pobrać i otworzyć w przeglądarce. Zawiera wszystkie wykresy jako osadzone obrazy PNG,
 działa bez sieci i nie wymaga uruchomienia serwera.
 
 ## Wyniki
@@ -27,7 +27,7 @@ Dla czterech klas 95% przedział bootstrap macro-F1 wynosi [0.9233; 0.9597]. Wyn
 Recall najrzadszej klasy `Hazardous` wynosi **86%** (100 obserwacji testowych).
 To ograniczenie jest widoczne w raporcie klas i analizie pomyłek.
 
-![Porównanie modeli w zagnieżdżonej walidacji](reports/figures/nested_cv.svg)
+![Porównanie modeli w zagnieżdżonej walidacji](reports/figures/nested_cv.png)
 
 ## Co jest oceniane?
 
@@ -62,7 +62,7 @@ Na Windows PowerShell zamiast `source` użyj:
 .venv\Scripts\Activate.ps1
 ```
 
-Pełna komenda generuje tabele, predykcje, modele lokalne, wykresy SVG, samowystarczalny
+Pełna komenda generuje tabele, predykcje, modele lokalne, wykresy PNG i SVG, samowystarczalny
 raport HTML i wykonany notebook. Nie wymaga konta Kaggle ani pobierania danych.
 Domyślnie używa jednego procesu, co ogranicza wymagania i działa także w środowiskach
 z ograniczoną obsługą procesów potomnych. W konfiguracji można wybrać do czterech workerów.
@@ -72,6 +72,10 @@ Szybkie odtworzenie prezentacji z istniejących wyników, bez treningu:
 ```bash
 python -m air_quality report --output reports --execute-notebook
 ```
+
+Notebook zawiera osadzone wykresy PNG z polskimi podpisami, gotowe do podglądu na
+GitHubie bez uruchamiania komórek. Generator i notebook odczytują tekst jako UTF-8,
+również na Windowsie. Wektorowe wersje SVG są dostępne osobno w `reports/figures/`.
 
 Predykcja po lokalnym treningu:
 
@@ -102,7 +106,8 @@ Nie zastępuje pełnego eksperymentu. GitHub Actions uruchamia te kontrole dla z
 
 Skrypt `verify_outputs.py` niezależnie przelicza główne metryki z zapisanych predykcji,
 sprawdza rozłączność podziału, hash danych i modułów obliczeniowych oraz wykonanie
-notebooka. Nie dopasowuje żadnego modelu i nie wybiera ponownie parametrów na teście.
+notebooka. Dekoduje każdy obraz PNG w raporcie i notebooku oraz porównuje go z osobnym
+plikiem wykresu. Nie dopasowuje żadnego modelu i nie wybiera ponownie parametrów na teście.
 
 ## Dane i ograniczenia
 
@@ -131,7 +136,7 @@ nowy podział nie zastępuje walidacji zewnętrznej.
 | `notebooks/air_quality_study.ipynb` | Analiza z wykonanymi komórkami i wykresami |
 | `reports/report.html` | Samowystarczalny raport wyników |
 | `reports/tables/` | Foldy, OOF, testowe predykcje, eksperymenty i wyniki strojenia |
-| `reports/figures/` | Osobne wykresy wektorowe SVG |
+| `reports/figures/` | Wykresy PNG do podglądu i wektorowe SVG do eksportu |
 | `docs/methodology.md` | Pytania badawcze, decyzje, założenia i literatura |
 | `docs/legacy/` | Oryginalne opracowanie i opis zastąpionych elementów |
 | `tests/`, `scripts/verify_outputs.py` | Testy i niezależne uzgodnienie wyników |

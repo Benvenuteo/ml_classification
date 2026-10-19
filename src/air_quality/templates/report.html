@@ -53,6 +53,8 @@
   {% if manifest.config.profile != 'full' %}<div class="note amber">To jest test techniczny na pomniejszonym zbiorze. Wyniki nie zastępują pełnego badania.</div>{% endif %}
   <p>Głównym zadaniem jest odtworzenie oryginalnych etykiet <strong>Good, Moderate, Poor i Hazardous</strong>.
     Wariant binarny grupuje Poor i Hazardous w klasę dodatnią. Oba zadania wykorzystują te same rekordy treningowe i testowe.</p>
+  <p class="muted">Na wykresach używamy polskich nazw tych samych klas:
+    Good — dobra, Moderate — umiarkowana, Poor — zła, Hazardous — niebezpieczna.</p>
   <div class="kpis">
     <div class="kpi"><strong>{{ '%.3f'|format(results.multiclass.macro_f1) }}</strong><span>Macro-F1 czterech klas na teście</span></div>
     <div class="kpi"><strong>{{ '%.1f'|format(results.multiclass.accuracy * 100) }}%</strong><span>Accuracy czterech klas na teście</span></div>
@@ -93,7 +95,10 @@
   <p class="muted">Usunięcie wszystkich oflagowanych obserwacji nierównomiernie zmieniłoby skład klas.
     Brak metadanych aparatury uniemożliwia rozróżnienie błędów zapisu od np. ujemnych wskazań po korekcie tła.</p>
   <details><summary>Rozkłady i korelacje części treningowej</summary>
-    <figure><img src="{{ figures.development_distributions }}" alt="Histogramy dziewięciu cech w części treningowej"><figcaption>Surowe wartości części development. Temperature: °C; Humidity: %; PM: µg/m³; NO₂ i SO₂: ppb; CO: ppm; odległość: km.</figcaption></figure>
+    <figure><img src="{{ figures.development_distributions }}" alt="Histogramy dziewięciu cech w części treningowej"><figcaption>
+      Rozkłady surowych wartości w części treningowej. Jednostki podano na osiach;
+      ppb i ppm oznaczają odpowiednio części na miliard i na milion.
+      Błędne wartości pozostają widoczne w audycie, a podczas treningu podlegają opisanym regułom maskowania.</figcaption></figure>
     <figure><img src="{{ figures.correlation }}" alt="Macierz korelacji Spearmana dziewięciu cech"><figcaption>Korelacja opisuje współzmienność. Nie ustala kierunku przyczynowego.</figcaption></figure>
   </details>
 </section>
@@ -131,7 +136,10 @@
     SVM korzysta z wbudowanych prawdopodobieństw SVC; etykieta jest wybierana przez ich argmax,
     aby reguła decyzji była taka sama podczas strojenia i oceny binarnego progu 0,50.</p>
   <figure><img src="{{ figures.nested_cv }}" alt="Średnie macro-F1 i odchylenia wyników zewnętrznych foldów dla pięciu rodzin modeli"><figcaption>
-    Punkty: średnia, odcinki: jedno SD foldów. Panele dotyczą odrębnych zadań i mają indywidualnie dopasowany zakres osi.</figcaption></figure>
+    Punkty oznaczają średnią F1 macro z {{ manifest.config.outer_splits }} zewnętrznych podziałów walidacyjnych,
+    a poziome odcinki — średnią ± jedno odchylenie standardowe wyników.
+    Odchylenie standardowe opisuje rozrzut między podziałami, a nie przedział ufności.
+    Panele dotyczą odrębnych zadań i mają indywidualnie dopasowany zakres osi.</figcaption></figure>
   <h3>Cztery klasy</h3><div class="table-scroll">{{ model_tables.multiclass|safe }}</div>
   <h3>Wariant binarny</h3><div class="table-scroll">{{ model_tables.binary|safe }}</div>
   <details><summary>Wybrane rodziny i hiperparametry</summary><pre>{{ decision_json }}</pre></details>
@@ -143,7 +151,9 @@
     Odsetek pomyłek o co najmniej dwa poziomy: {{ '%.2f'|format(results.multiclass.severe_error_rate * 100) }}%.
     Te dodatkowe miary przyjmują umowną, równą odległość między kolejnymi etykietami.</p>
   {% if figures.learning_curve is defined %}<figure><img src="{{ figures.learning_curve }}" alt="Krzywa uczenia wybranego modelu czteroklasowego"><figcaption>
-    Diagnostyka na development przy ustalonej konfiguracji. Cieniowanie: jedno SD wyników walidacji, bez interpretacji jako przedział ufności.</figcaption></figure>{% endif %}
+    Wyniki treningowe i walidacyjne przy rosnącej liczbie rekordów oraz ustalonej konfiguracji modelu.
+    Cieniowanie oznacza średnią ± jedno odchylenie standardowe wyników walidacji.
+    Nie jest to przedział ufności.</figcaption></figure>{% endif %}
 </section>
 <section id="experiments">
   <h2>Eksperymenty wrażliwości</h2>
@@ -158,7 +168,10 @@
     <li><strong>Czyszczenie:</strong> dane surowe kontra reguły domenowe i imputacja, przy identycznym modelu referencyjnym.</li>
   </ul>
   <figure><img src="{{ figures.ablations }}" alt="Porównanie równoważenia, grup cech, klastrów i sposobu czyszczenia"><figcaption>
-    Badania są opisowe i zależne od wybranego modelu referencyjnego. Różnice pojedynczych foldów nie stanowią dowodu istotności statystycznej.</figcaption></figure>
+    Pierwsze trzy wiersze porównują równoważenie dla regresji logistycznej;
+    kolejne sześć — zestawy cech dla boostingu histogramowego; ostatnie dwa — sposób czyszczenia dla tego samego boostingu.
+    Punkty oznaczają średnią F1 macro, a odcinki — średnią ± jedno odchylenie standardowe wyników walidacji.
+    Są to badania opisowe zależne od modelu referencyjnego. Same różnice średnich nie dowodzą istotności statystycznej.</figcaption></figure>
   <details><summary>Pełne tabele eksperymentów</summary><h3>Cztery klasy</h3><div class="table-scroll">{{ ablation_tables.multiclass|safe }}</div>
     <h3>Dwie klasy</h3><div class="table-scroll">{{ ablation_tables.binary|safe }}</div></details>
 </section>
@@ -172,7 +185,9 @@
   <figure><img src="{{ figures.binary_confusion }}" alt="Macierze pomyłek bezpośredniego modelu binarnego i agregacji czterech klas"><figcaption>
     Ten sam test i to samo kodowanie celu. Wynik agregacji zachowuje możliwość przedstawienia także pełnego rozkładu czterech klas.</figcaption></figure>
   <div class="table-scroll">{{ probability_table|safe }}</div>
-  <figure><img src="{{ figures.probability_quality }}" alt="Krzywe precision–recall oraz kalibracji obu sposobów otrzymywania prawdopodobieństw binarnych"><figcaption>
+  <figure><img src="{{ figures.probability_quality }}" alt="Krzywe precyzji i czułości oraz kalibracji obu modeli binarnych"><figcaption>
+    Klasa dodatnia obejmuje jakość złą i niebezpieczną (Poor lub Hazardous).
+    Precyzja to udział trafień wśród wskazań tej klasy, a czułość — udział wykrytych rekordów tej klasy.
     Average precision podsumowuje ranking klasy dodatniej. Kalibracja zestawia przewidywane prawdopodobieństwa
     z udziałem tej klasy w ośmiu grupach kwantylowych; małe grupy są obarczone niepewnością próby.</figcaption></figure>
   <p>Różnica macro-F1 (model bezpośredni minus agregacja):
@@ -198,10 +213,15 @@
 <section id="explanation">
   <h2>Interpretacja predykcji</h2>
   <figure><img src="{{ figures.permutation_importance }}" alt="Ważność permutacyjna dziewięciu cech wybranego modelu czteroklasowego"><figcaption>
-    Test końcowy, {{ manifest.config.permutation_repeats }} permutacji cechy. Odcinki oznaczają SD permutacji.
+    Spadek F1 macro po losowym przestawieniu wartości jednej cechy w teście końcowym,
+    uśredniony z {{ manifest.config.permutation_repeats }} powtórzeń.
+    Odcinki oznaczają średnią ± jedno odchylenie standardowe tego spadku.
     Skorelowane cechy mogą zastępować się wzajemnie, obniżając indywidualne znaczenie permutacyjne.</figcaption></figure>
   <figure><img src="{{ figures.partial_dependence }}" alt="Częściowe zależności prawdopodobieństwa Hazardous od CO i odległości od przemysłu"><figcaption>
-    PDP dla z góry wybranych CO i odległości od przemysłu, uśrednione po części development.
+    Wykresy zależności częściowej (PDP) dla stężenia CO i odległości od przemysłu.
+    Oś pionowa pokazuje średnie prawdopodobieństwo klasy niebezpiecznej (Hazardous),
+    obliczone po zmianie jednej cechy i uśrednieniu predykcji w części treningowej.
+    Czarne kreski u dołu wykresów wskazują decyle rozkładu cechy.
     Nie są efektami przyczynowymi. Modyfikowanie jednej cechy przy stałych pozostałych może tworzyć nietypowe kombinacje.</figcaption></figure>
   <p>Analiza cech odpowiada na pytanie, z jakich sygnałów korzysta model.
     Bez danych o sposobie tworzenia etykiet nie da się ustalić, czy rozpoznaje rzeczywisty proces środowiskowy,
@@ -233,7 +253,8 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install --no-deps -e .
 python -m air_quality run --config configs/study.json</pre>
-  <p>Raport jest samowystarczalnym plikiem HTML: wykresy są osadzone i działają bez sieci.
+  <p>Raport jest samowystarczalnym plikiem HTML: wykresy PNG są osadzone i działają bez sieci.
+    Osobne pliki PNG i wektorowe SVG znajdują się w <code>reports/figures/</code>.
     Notebook <code>notebooks/air_quality_study.ipynb</code> odczytuje zapisane wyniki, a pełne przeliczenie zapewnia powyższa komenda.</p>
   <p>SHA-256 surowego pliku: <code>{{ manifest.dataset_sha256 }}</code>.
     Python {{ manifest.environment.python }}. Czas fazy obliczeń: {{ '%.1f'|format(manifest.elapsed_seconds) }} s.
