@@ -1,0 +1,94 @@
+{
+  "rows": 5000,
+  "feature_count": 9,
+  "class_counts": {
+    "Good": 2000,
+    "Moderate": 1500,
+    "Poor": 1000,
+    "Hazardous": 500
+  },
+  "missing_values": 0,
+  "duplicate_rows": 0,
+  "issue_counts": {
+    "Humidity_above_100": 195,
+    "Humidity_below_0": 0,
+    "PM2.5_negative": 0,
+    "PM10_negative": 1,
+    "NO2_negative": 0,
+    "SO2_negative": 30,
+    "CO_negative": 0,
+    "Proximity_to_Industrial_Areas_negative": 0,
+    "Population_Density_negative": 0,
+    "PM2.5_above_PM10": 32
+  },
+  "any_issue_rows": 254,
+  "hard_issue_rows": 225,
+  "issues_by_class": [
+    {
+      "class": "Good",
+      "rows": 2000,
+      "any_issue_rows": 32,
+      "hard_issue_rows": 17,
+      "issue_rate": 0.016
+    },
+    {
+      "class": "Moderate",
+      "rows": 1500,
+      "any_issue_rows": 15,
+      "hard_issue_rows": 7,
+      "issue_rate": 0.01
+    },
+    {
+      "class": "Poor",
+      "rows": 1000,
+      "any_issue_rows": 72,
+      "hard_issue_rows": 70,
+      "issue_rate": 0.072
+    },
+    {
+      "class": "Hazardous",
+      "rows": 500,
+      "any_issue_rows": 135,
+      "hard_issue_rows": 131,
+      "issue_rate": 0.27
+    }
+  ],
+  "ranges": {
+    "Temperature": {
+      "min": 13.4,
+      "max": 58.6
+    },
+    "Humidity": {
+      "min": 36.0,
+      "max": 128.1
+    },
+    "PM2.5": {
+      "min": 0.0,
+      "max": 295.0
+    },
+    "PM10": {
+      "min": -0.2,
+      "max": 315.8
+    },
+    "NO2": {
+      "min": 7.4,
+      "max": 64.9
+    },
+    "SO2": {
+      "min": -6.2,
+      "max": 44.9
+    },
+    "CO": {
+      "min": 0.65,
+      "max": 3.72
+    },
+    "Proximity_to_Industrial_Areas": {
+      "min": 2.5,
+      "max": 25.8
+    },
+    "Population_Density": {
+      "min": 188.0,
+      "max": 957.0
+    }
+  }
+}

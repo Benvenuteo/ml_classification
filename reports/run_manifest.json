@@ -1,0 +1,65 @@
+{
+  "started_at": "2026-10-19T11:14:40.930541+00:00",
+  "config": {
+    "profile": "full",
+    "dataset": "data/raw/pollution_dataset.csv",
+    "output_dir": "reports",
+    "expected_sha256": "052fc6679ac05ef51e9198cb80b7e944ea134a04ad07b86dd53688e0f86895d6",
+    "split_seed": 42,
+    "cv_seed": 19,
+    "model_seed": 42,
+    "bootstrap_seed": 2026,
+    "test_size": 0.2,
+    "outer_splits": 5,
+    "inner_splits": 3,
+    "search_iterations": 8,
+    "bootstrap_iterations": 2000,
+    "permutation_repeats": 10,
+    "n_jobs": 1,
+    "sample_size": null,
+    "execute_notebook": true
+  },
+  "dataset_sha256": "052fc6679ac05ef51e9198cb80b7e944ea134a04ad07b86dd53688e0f86895d6",
+  "development_rows": 4000,
+  "holdout_rows": 1000,
+  "class_order": [
+    "Good",
+    "Moderate",
+    "Poor",
+    "Hazardous"
+  ],
+  "binary_positive": [
+    "Poor",
+    "Hazardous"
+  ],
+  "evaluation_status": "completed",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "source_base_commit": "61f5696e2a60747f7ca83e13eb526d67eba58680",
+    "versions": {
+      "numpy": "2.3.5",
+      "pandas": "2.2.3",
+      "scipy": "1.17.0",
+      "scikit-learn": "1.8.0",
+      "imbalanced-learn": "0.14.2",
+      "matplotlib": "3.10.8",
+      "jinja2": "3.1.6",
+      "joblib": "1.5.3",
+      "nbformat": "5.11.1",
+      "nbclient": "0.11.0",
+      "ipykernel": "7.4.0"
+    }
+  },
+  "numerical_source_sha256": {
+    "config.py": "2ac4ec4213e3da41a2a09c0c5890a3340000e584da6bd13bd76e3ad6d97acabd",
+    "data.py": "6b0a4836a3761a06433d542841274a309d0de9f6de45c403b447749da1f6e75a",
+    "preprocessing.py": "64c0b485b23e65d2362a1c894c62f8d84f6c9ee2693e4b12e9caa2a9c5f1dbaf",
+    "models.py": "eb54baef6467be28d935087cb8fca944341ffc6825add799ced499bb7c4a9f56",
+    "evaluation.py": "084e90f735917dc15ad58f9f3f055ce197bffae8bb8e836ca17b33396c7c8c66",
+    "study.py": "0bc1abdafa7f62c2ea20fc60c76fea48ad6dd124f81db58abd23580e6a61d1d3"
+  },
+  "historical_limitation": "The same public dataset was explored in a previous project; this is a fixed procedural holdout, not a prospectively collected external sample.",
+  "elapsed_seconds": 621.481,
+  "finished_at": "2026-10-19T11:25:02.350454+00:00"
+}

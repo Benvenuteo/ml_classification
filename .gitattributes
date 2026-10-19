@@ -1,0 +1,4 @@
+* text=auto eol=lf
+data/raw/*.csv -text whitespace=cr-at-eol
+docs/legacy/original_project.md -text whitespace=-trailing-space
+*.png binary

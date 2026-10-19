@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Odtwarzalne badanie klasyfikacji jakości powietrza: cztery klasy, binaryzacja, walidacja i analiza błędów.">
+  <title>Klasyfikacja jakości powietrza — raport badawczy</title>
+  <style>
+    :root{--ink:#172b41;--muted:#5c6a79;--blue:#286a93;--line:#dce3eb;--paper:#fff;--bg:#f3f5f8;--amber:#c07035}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:var(--blue);text-underline-offset:3px}header{background:#142a40;color:white;padding:64px max(6vw,24px) 48px}
+    .wrap{max-width:1180px;margin:auto}.eyebrow{font-size:12px;font-weight:650;letter-spacing:1.5px;text-transform:uppercase;color:#adc7da}
+    h1{font-size:clamp(32px,4.4vw,54px);line-height:1.12;letter-spacing:-1.4px;max-width:850px;margin:16px 0 20px}
+    .lead{color:#d1dfeb;max-width:800px;font-size:18px;line-height:1.6}.meta{color:#aec4d4;font-size:13px;margin-top:28px}
+    nav{background:white;border-bottom:1px solid var(--line);padding:15px 24px}nav .wrap{display:flex;flex-wrap:wrap;gap:10px 26px}
+    nav a{font-size:13px;text-decoration:none;font-weight:600}main{max-width:1180px;margin:32px auto 60px;padding:0 22px}
+    section{background:var(--paper);padding:32px 38px;margin-bottom:22px;border:1px solid var(--line);border-radius:10px}
+    h2{font-size:25px;line-height:1.3;letter-spacing:-.5px;margin:0 0 16px}h3{font-size:18px;margin:28px 0 12px}
+    p{margin:12px 0}ul,ol{padding-left:24px}li{margin:6px 0}.muted,figcaption{color:var(--muted);font-size:13px}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}.kpi{border-left:3px solid #5c93b2;padding:3px 0 3px 18px}
+    .kpi strong{display:block;font-size:36px;line-height:1.2;font-weight:650;letter-spacing:-1px}.kpi span{font-size:13px;color:var(--muted)}
+    .note{padding:15px 18px;background:#f0f5f9;border-left:3px solid var(--blue);margin:20px 0}.note.amber{background:#fbf5ee;border-color:var(--amber)}
+    figure{margin:24px 0 16px}figure img{display:block;max-width:100%;height:auto;margin:auto}figcaption{line-height:1.5;margin-top:12px}
+    .table-scroll{overflow-x:auto;margin:18px 0 24px}.data-table{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.45}
+    .data-table th{background:#edf2f7;text-align:right;font-weight:650;padding:11px 10px;border-bottom:1px solid #bdccd9;white-space:nowrap}
+    .data-table td{padding:10px;border-bottom:1px solid #e5eaf0;text-align:right;font-variant-numeric:tabular-nums}
+    .data-table th:first-child,.data-table td:first-child{text-align:left}.data-table tr:nth-child(even) td{background:#f9fafc}
+    details{margin:16px 0;border:1px solid var(--line);border-radius:6px;padding:12px 16px}summary{cursor:pointer;font-weight:600;font-size:14px}
+    pre{overflow:auto;background:#f2f5f8;padding:18px;border-radius:6px;font:12px/1.6 ui-monospace,monospace}
+    code{font:13px ui-monospace,monospace;overflow-wrap:anywhere}footer{padding:0 24px 40px;text-align:center;color:var(--muted);font-size:12px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}.ref-list{font-size:14px}.ref-list li{margin:12px 0}
+    @media(max-width:700px){header{padding:38px 24px 32px}section{padding:24px 20px}main{padding:0 12px;margin-top:20px}.kpis{grid-template-columns:1fr}.kpi strong{font-size:30px}.two-col{grid-template-columns:1fr}h2{font-size:22px}}
+    @media print{body{background:white;font-size:11px}header{padding:24px;color:#172b41;background:white}.lead,.meta,.eyebrow{color:#40586b}nav{display:none}main{max-width:none;margin:0}section{break-inside:auto;border:0;padding:18px 0;margin:0}figure,.kpis{break-inside:avoid}details{display:block}.table-scroll{overflow:visible}a{color:inherit}h2,h3{break-after:avoid}}
+  </style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="eyebrow">Badanie klasyfikacji danych tabelarycznych</div>
+  <h1>Klasyfikacja jakości powietrza</h1>
+  <p class="lead">Cztery poziomy jakości, binarne grupowanie etykiet i kontrolowane porównanie metod.
+    Ocena oparta na wspólnych podziałach danych, zagnieżdżonej walidacji oraz wydzielonym teście końcowym.</p>
+  <div class="meta">{{ audit.rows }} obserwacji · {{ audit.feature_count }} cech · Kaggle, wersja 2 · Profil: {{ manifest.config.profile }}</div>
+</div></header>
+<nav aria-label="Spis treści"><div class="wrap">
+  <a href="#overview">Wyniki</a><a href="#data">Dane</a><a href="#method">Metodologia</a>
+  <a href="#models">Modele</a><a href="#experiments">Eksperymenty</a><a href="#binary">Binaryzacja</a>
+  <a href="#explanation">Interpretacja</a><a href="#limits">Ograniczenia</a><a href="#reproduction">Odtworzenie</a>
+</div></nav>
+<main>
+<section id="overview">
+  <h2>Wyniki końcowe</h2>
+  {% if manifest.config.profile != 'full' %}<div class="note amber">To jest test techniczny na pomniejszonym zbiorze. Wyniki nie zastępują pełnego badania.</div>{% endif %}
+  <p>Głównym zadaniem jest odtworzenie oryginalnych etykiet <strong>Good, Moderate, Poor i Hazardous</strong>.
+    Wariant binarny grupuje Poor i Hazardous w klasę dodatnią. Oba zadania wykorzystują te same rekordy treningowe i testowe.</p>
+  <div class="kpis">
+    <div class="kpi"><strong>{{ '%.3f'|format(results.multiclass.macro_f1) }}</strong><span>Macro-F1 czterech klas na teście</span></div>
+    <div class="kpi"><strong>{{ '%.1f'|format(results.multiclass.accuracy * 100) }}%</strong><span>Accuracy czterech klas na teście</span></div>
+    <div class="kpi"><strong>{{ manifest.holdout_rows }}</strong><span>Rekordów w teście końcowym</span></div>
+  </div>
+  <p>Wybrana rodzina dla czterech klas: <strong>{{ model_names[decisions.models.multiclass.name] }}</strong>.
+    Średnie macro-F1 w zewnętrznej walidacji wyniosło {{ '%.4f'|format(decisions.models.multiclass.nested_macro_f1_mean) }}
+    (SD {{ '%.4f'|format(decisions.models.multiclass.nested_macro_f1_std) }}).</p>
+  <div class="table-scroll">{{ test_table|safe }}</div>
+  <p class="muted">Przedziały 95%: percentylowy bootstrap stratyfikowany według czterech oryginalnych klas,
+    {{ manifest.config.bootstrap_iterations }} powtórzeń, przy ustalonych modelach. Macro-F1 zadania dwu- i czteroklasowego
+    opisuje różne problemy i nie służy do bezpośredniego porównania ich trudności.</p>
+  <div class="note">Klasyfikacja czterech poziomów jest wykonalna w obrębie tego zbioru.
+    Wynik mierzy zgodność z jego etykietami. Nie jest walidacją indywidualnego zalecenia dotyczącego wyjścia na zewnątrz.</div>
+  <h3>Odpowiedzi na pytania badawcze</h3>
+  <ul>{% for finding in findings %}<li>{{ finding }}</li>{% endfor %}</ul>
+</section>
+<section id="data">
+  <h2>Dane i kontrola jakości</h2>
+  <p>Autor zbioru: <strong>Mujtaba Mateen</strong>, <a href="https://www.kaggle.com/datasets/mujtabamatin/air-quality-and-pollution-assessment">Air Quality and Pollution Assessment</a>.
+    Metadane Kaggle wskazują wersję 2, aktualizację 4 grudnia 2024 i licencję Apache 2.0.
+    Zapis metadanych znajduje się w repozytorium w <code>data/source_metadata.json</code>.</p>
+  <p>Opis źródłowy nie dokumentuje stacji pomiarowych, miast, dat, sposobu próbkowania ani reguł tworzenia klas.
+    Nie potwierdza pochodzenia z WHO lub Banku Światowego. Nie określa też jednoznacznie,
+    czy dane są pomiarowe czy syntetyczne. Wysoka trafność nie rozstrzyga tej kwestii.</p>
+  <figure><img src="{{ figures.data_quality }}" alt="Liczebności czterech klas oraz odsetek rekordów z flagami jakości w każdej klasie"><figcaption>
+    Audyt całego pliku: {{ audit.any_issue_rows }} rekordy z co najmniej jedną flagą,
+    w tym {{ audit.hard_issue_rows }} z naruszeniem reguły domenowej. Liczby reguł nie sumują się do liczby rekordów z powodu nakładania się flag.</figcaption></figure>
+  <div class="two-col"><div class="table-scroll">{{ issue_counts|safe }}</div><div>
+    <h3>Zasady przetwarzania</h3><ul>
+      <li>Wilgotność poza [0, 100] i ujemne stężenia, odległość lub gęstość zaludnienia oznaczamy jako braki.</li>
+      <li>Medianę do imputacji i parametry skalowania wyznaczamy wyłącznie na aktualnym foldzie treningowym.</li>
+      <li>Nie usuwamy całych obserwacji. Wysokie dodatnie stężenia zachowujemy jako potencjalnie istotne zdarzenia.</li>
+      <li>PM2.5 &gt; PM10 pozostaje flagą. Nie znamy porównywalności okresów i warunków pomiaru.</li>
+      <li>Braki w surowym pliku: {{ audit.missing_values }}. Pełne duplikaty: {{ audit.duplicate_rows }}.</li>
+    </ul></div></div>
+  <div class="table-scroll">{{ issue_table|safe }}</div>
+  <p class="muted">Usunięcie wszystkich oflagowanych obserwacji nierównomiernie zmieniłoby skład klas.
+    Brak metadanych aparatury uniemożliwia rozróżnienie błędów zapisu od np. ujemnych wskazań po korekcie tła.</p>
+  <details><summary>Rozkłady i korelacje części treningowej</summary>
+    <figure><img src="{{ figures.development_distributions }}" alt="Histogramy dziewięciu cech w części treningowej"><figcaption>Surowe wartości części development. Temperature: °C; Humidity: %; PM: µg/m³; NO₂ i SO₂: ppb; CO: ppm; odległość: km.</figcaption></figure>
+    <figure><img src="{{ figures.correlation }}" alt="Macierz korelacji Spearmana dziewięciu cech"><figcaption>Korelacja opisuje współzmienność. Nie ustala kierunku przyczynowego.</figcaption></figure>
+  </details>
+</section>
+<section id="method">
+  <h2>Metodologia i kryteria oceny</h2>
+  <ol>
+    <li><strong>Wspólny podział:</strong> {{ manifest.development_rows }} rekordów development i {{ manifest.holdout_rows }} testowych.
+      Stratyfikacja według czterech klas, ziarno {{ manifest.config.split_seed }}. Identyfikatory zapisano w split_manifest.csv.</li>
+    <li><strong>Główna metryka:</strong> macro-F1, czyli średnia F1 z równą wagą każdej klasy. Dodatkowo accuracy,
+      balanced accuracy, raport klas, log-loss i miary uwzględniające porządek kategorii.</li>
+    <li><strong>Walidacja zagnieżdżona:</strong> {{ manifest.config.outer_splits }} zewnętrznych foldów,
+      {{ manifest.config.inner_splits }} wewnętrznych. W każdym zewnętrznym foldzie wyszukiwanie losowe sprawdza
+      {{ manifest.config.search_iterations }} konfiguracji danej rodziny. Oba zadania mają te same zewnętrzne podziały.</li>
+    <li><strong>Pipeline:</strong> reguły domenowe, imputacja medianą, StandardScaler, opcjonalny SMOTE, klasyfikator.
+      Równoważenie jest częścią wewnętrznego strojenia. SMOTE korzysta z trzech sąsiadów w przeskalowanej przestrzeni.
+      Skalowanie drzew zachowuje wspólny schemat i umożliwia poprawne porównanie z SMOTE.</li>
+    <li><strong>Wybór i zamrożenie:</strong> wybór rodziny według średniego zewnętrznego macro-F1,
+      ponowne strojenie na całym development, wybór progów na predykcjach out-of-fold, zapis frozen_decisions.json.</li>
+    <li><strong>Test końcowy:</strong> jednorazowa faza oceny zamrożonych procedur. Wyniki testowe i permutation importance
+      nie uruchamiają kolejnego wyboru modelu, cech ani progu.</li>
+  </ol>
+  <div class="note amber">Średnia zewnętrzna ocenia procedurę strojenia danej rodziny.
+    Wskazanie najwyższej średniej spośród kilku rodzin dodaje optymizm selekcyjny.
+    Dlatego końcowy wynik pochodzi z wydzielonego testu. Foldy nie są niezależnymi próbami:
+    nie wykonujemy testów t na ich wynikach, a SD nie traktujemy jako 95% przedziału ufności.</div>
+  <p>Dane były już analizowane w starszym projekcie. Nowy podział jest proceduralnym holdoutem dla poprawionej analizy,
+    a nie niezależnym, prospektywnie zebranym zbiorem zewnętrznym.</p>
+</section>
+<section id="models">
+  <h2>Porównanie rodzin modeli</h2>
+  <p>Punktem odniesienia jest przewidywanie najczęstszej klasy. Porównanie obejmuje regresję logistyczną,
+    kNN, SVM z jądrem RBF, Random Forest i Histogram Gradient Boosting.
+    Boosting histogramowy ogranicza koszt powtarzanego strojenia na danych tabelarycznych.
+    Klasyfikatory mają ustalone ziarna losowe, a estymatory nie tworzą dodatkowych zagnieżdżonych pul procesów.
+    SVM korzysta z wbudowanych prawdopodobieństw SVC; etykieta jest wybierana przez ich argmax,
+    aby reguła decyzji była taka sama podczas strojenia i oceny binarnego progu 0,50.</p>
+  <figure><img src="{{ figures.nested_cv }}" alt="Średnie macro-F1 i odchylenia wyników zewnętrznych foldów dla pięciu rodzin modeli"><figcaption>
+    Punkty: średnia, odcinki: jedno SD foldów. Panele dotyczą odrębnych zadań i mają indywidualnie dopasowany zakres osi.</figcaption></figure>
+  <h3>Cztery klasy</h3><div class="table-scroll">{{ model_tables.multiclass|safe }}</div>
+  <h3>Wariant binarny</h3><div class="table-scroll">{{ model_tables.binary|safe }}</div>
+  <details><summary>Wybrane rodziny i hiperparametry</summary><pre>{{ decision_json }}</pre></details>
+  <figure><img src="{{ figures.multiclass_confusion }}" alt="Macierz pomyłek czterech klas na końcowym zbiorze testowym"><figcaption>
+    Liczby bezwzględne oraz procenty w obrębie rzeczywistej klasy. Mocniejszy kolor oznacza większy udział w danym wierszu.</figcaption></figure>
+  <div class="table-scroll">{{ class_table|safe }}</div>
+  <p>Kappa kwadratowo ważona: <strong>{{ '%.4f'|format(results.multiclass.quadratic_kappa) }}</strong>.
+    Średni błąd na umownej skali 0–3: {{ '%.4f'|format(results.multiclass.ordinal_mae) }}.
+    Odsetek pomyłek o co najmniej dwa poziomy: {{ '%.2f'|format(results.multiclass.severe_error_rate * 100) }}%.
+    Te dodatkowe miary przyjmują umowną, równą odległość między kolejnymi etykietami.</p>
+  {% if figures.learning_curve is defined %}<figure><img src="{{ figures.learning_curve }}" alt="Krzywa uczenia wybranego modelu czteroklasowego"><figcaption>
+    Diagnostyka na development przy ustalonej konfiguracji. Cieniowanie: jedno SD wyników walidacji, bez interpretacji jako przedział ufności.</figcaption></figure>{% endif %}
+</section>
+<section id="experiments">
+  <h2>Eksperymenty wrażliwości</h2>
+  <p>Wszystkie poniższe eksperymenty korzystają z części development oraz tych samych foldów.
+    Nie służą do wybierania dodatkowej konfiguracji na podstawie testu końcowego.</p>
+  <ul>
+    <li><strong>Równoważenie:</strong> regresja logistyczna bez równoważenia, z wagami klas i z SMOTE, przy pozostałych ustawieniach stałych.</li>
+    <li><strong>Grupy cech:</strong> ustalony Histogram Gradient Boosting ze wszystkimi cechami, samymi zanieczyszczeniami,
+      samymi cechami kontekstu, bez CO i bez PM2.5.</li>
+    <li><strong>Klasteryzacja:</strong> dwa dodatkowe dystanse do centroidów KMeans, dopasowanego na skalowanych CO i odległości
+      od przemysłu wyłącznie wewnątrz foldu. Nie wykorzystujemy arbitralnych numerów klastrów jako wartości ciągłych.</li>
+    <li><strong>Czyszczenie:</strong> dane surowe kontra reguły domenowe i imputacja, przy identycznym modelu referencyjnym.</li>
+  </ul>
+  <figure><img src="{{ figures.ablations }}" alt="Porównanie równoważenia, grup cech, klastrów i sposobu czyszczenia"><figcaption>
+    Badania są opisowe i zależne od wybranego modelu referencyjnego. Różnice pojedynczych foldów nie stanowią dowodu istotności statystycznej.</figcaption></figure>
+  <details><summary>Pełne tabele eksperymentów</summary><h3>Cztery klasy</h3><div class="table-scroll">{{ ablation_tables.multiclass|safe }}</div>
+    <h3>Dwie klasy</h3><div class="table-scroll">{{ ablation_tables.binary|safe }}</div></details>
+</section>
+<section id="binary">
+  <h2>Co zmienia binaryzacja?</h2>
+  <p>W nowym kodzie <strong>1 = Poor lub Hazardous</strong>, a <strong>0 = Good lub Moderate</strong>.
+    To odwrotna orientacja względem starej zmiennej Can_Go_Outside. Nazwa i dokumentacja nowego celu opisują grupowanie etykiet.</p>
+  <p>Uczciwe porównanie dotyczy wspólnego problemu binarnego: modelu trenowanego bezpośrednio na dwóch klasach
+    oraz prawdopodobieństwa <code>P(Poor) + P(Hazardous)</code> z modelu czteroklasowego.
+    Podstawowe porównanie stosuje próg 0,50 dla obu metod.</p>
+  <figure><img src="{{ figures.binary_confusion }}" alt="Macierze pomyłek bezpośredniego modelu binarnego i agregacji czterech klas"><figcaption>
+    Ten sam test i to samo kodowanie celu. Wynik agregacji zachowuje możliwość przedstawienia także pełnego rozkładu czterech klas.</figcaption></figure>
+  <div class="table-scroll">{{ probability_table|safe }}</div>
+  <figure><img src="{{ figures.probability_quality }}" alt="Krzywe precision–recall oraz kalibracji obu sposobów otrzymywania prawdopodobieństw binarnych"><figcaption>
+    Average precision podsumowuje ranking klasy dodatniej. Kalibracja zestawia przewidywane prawdopodobieństwa
+    z udziałem tej klasy w ośmiu grupach kwantylowych; małe grupy są obarczone niepewnością próby.</figcaption></figure>
+  <p>Różnica macro-F1 (model bezpośredni minus agregacja):
+    <strong>{{ '%+.4f'|format(results.paired_binary_comparison.macro_f1_delta_direct_minus_aggregated) }}</strong>,
+    sparowany 95% przedział bootstrap:
+    [{{ '%+.4f'|format(results.paired_binary_comparison.paired_95ci[0]) }};
+    {{ '%+.4f'|format(results.paired_binary_comparison.paired_95ci[1]) }}].
+    Dokładny test McNemara: p = {{ '%.4f'|format(results.paired_binary_comparison.mcnemar_exact_p) }}.
+    Tylko model bezpośredni poprawny: {{ results.paired_binary_comparison.direct_only_correct }};
+    tylko agregacja poprawna: {{ results.paired_binary_comparison.aggregated_only_correct }}.</p>
+  <p class="muted">McNemar bada różnicę w poprawności sparowanych predykcji, a nie różnicę macro-F1.
+    Przedział obejmujący zero nie dowodzi równoważności metod. Bootstrap i test zakładają w przybliżeniu
+    niezależne rekordy; bez metadanych nie można sprawdzić zależności wewnątrz stacji i okresów.</p>
+  <h3>Progi preferujące recall</h3>
+  <p>Dodatkowo wybrano progi maksymalizujące F2 na zagnieżdżonych predykcjach out-of-fold z development:
+    {{ '%.2f'|format(decisions.direct_threshold.threshold) }} dla modelu bezpośredniego oraz
+    {{ '%.2f'|format(decisions.aggregated_threshold.threshold) }} dla agregacji.
+    Zakres wyszukiwania 0,05–0,95, krok 0,01; przy remisie wybierany jest próg najbliższy 0,50.</p>
+  <p>F2 jest zadeklarowaną preferencją większej czułości, a nie oszacowaniem kosztów zdrowotnych.
+    Wynik F2 na danych użytych do doboru progu jest optymistyczny; ocenę zapewnia test końcowy.
+    Te dodatkowe procedury przedstawiono w tabeli wyników, bez ponownego wyboru na podstawie ich testowej jakości.</p>
+</section>
+<section id="explanation">
+  <h2>Interpretacja predykcji</h2>
+  <figure><img src="{{ figures.permutation_importance }}" alt="Ważność permutacyjna dziewięciu cech wybranego modelu czteroklasowego"><figcaption>
+    Test końcowy, {{ manifest.config.permutation_repeats }} permutacji cechy. Odcinki oznaczają SD permutacji.
+    Skorelowane cechy mogą zastępować się wzajemnie, obniżając indywidualne znaczenie permutacyjne.</figcaption></figure>
+  <figure><img src="{{ figures.partial_dependence }}" alt="Częściowe zależności prawdopodobieństwa Hazardous od CO i odległości od przemysłu"><figcaption>
+    PDP dla z góry wybranych CO i odległości od przemysłu, uśrednione po części development.
+    Nie są efektami przyczynowymi. Modyfikowanie jednej cechy przy stałych pozostałych może tworzyć nietypowe kombinacje.</figcaption></figure>
+  <p>Analiza cech odpowiada na pytanie, z jakich sygnałów korzysta model.
+    Bez danych o sposobie tworzenia etykiet nie da się ustalić, czy rozpoznaje rzeczywisty proces środowiskowy,
+    czy przede wszystkim strukturę konstrukcji tego konkretnego zbioru.</p>
+</section>
+<section id="limits">
+  <h2>Ograniczenia i wnioski</h2>
+  <ol>
+    <li><strong>Wieloklasowość:</strong> cztery klasy można modelować bez konieczności ich łączenia.
+      Agregacja usuwa różnicę między Good i Moderate oraz między Poor i Hazardous.</li>
+    <li><strong>Generalizacja:</strong> brak identyfikatorów stacji, miast i czasu uniemożliwia walidację przestrzenną,
+      grupową i czasową. Losowy podział mierzy generalizację wewnątrz dostępnego rozkładu.</li>
+    <li><strong>Pochodzenie i cel:</strong> brak udokumentowanych reguł etykietowania i pochodzenia pomiarów.
+      Wyniki nie zastępują walidacji na niezależnych danych referencyjnych ani reguł oficjalnego indeksu jakości powietrza.</li>
+    <li><strong>Niepewność:</strong> bootstrap zachowuje liczebności klas i ustalone modele.
+      Nie obejmuje zmian procesu pomiarowego, ponownego treningu i niepewności wyboru rodziny.</li>
+    <li><strong>Zakres strojenia:</strong> ograniczony budżet wyszukiwania i ustalone przestrzenie hiperparametrów.
+      Wynik nie oznacza globalnie najlepszej konfiguracji danej metody.</li>
+    <li><strong>Wcześniejsza eksploracja:</strong> publiczny zbiór był już analizowany w projekcie źródłowym.
+      Dalsza weryfikacja powinna wykorzystać nowy, niezależny zbiór z udokumentowanym procesem pomiarowym.</li>
+  </ol>
+</section>
+<section id="reproduction">
+  <h2>Odtworzenie analizy</h2>
+  <pre>python -m venv .venv
+# Linux / macOS
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m pip install --no-deps -e .
+python -m air_quality run --config configs/study.json</pre>
+  <p>Raport jest samowystarczalnym plikiem HTML: wykresy są osadzone i działają bez sieci.
+    Notebook <code>notebooks/air_quality_study.ipynb</code> odczytuje zapisane wyniki, a pełne przeliczenie zapewnia powyższa komenda.</p>
+  <p>SHA-256 surowego pliku: <code>{{ manifest.dataset_sha256 }}</code>.
+    Python {{ manifest.environment.python }}. Czas fazy obliczeń: {{ '%.1f'|format(manifest.elapsed_seconds) }} s.
+    Manifest zapisuje konfigurację, wersje, identyfikatory podziału oraz moment zamrożenia decyzji.</p>
+  <p class="muted">Ziarna są ustalone. Czasy, znaczniki czasu i drobne różnice numeryczne mogą zależeć od platformy.
+    Pole source_base_commit wskazuje bazowy commit checkoutu, a nie gwarancję braku lokalnych zmian.</p>
+  <details><summary>Konfiguracja i wersje bibliotek</summary><pre>{{ config_json }}</pre><div class="table-scroll">{{ versions|safe }}</div></details>
+  <h3>Źródła i odniesienia metodologiczne</h3>
+  <ol class="ref-list">
+    <li>Mujtaba Mateen. <a href="https://www.kaggle.com/datasets/mujtabamatin/air-quality-and-pollution-assessment">Air Quality and Pollution Assessment</a>.
+      Kaggle, wersja 2. Metadane i atrybucja zapisane w repozytorium.</li>
+    <li>scikit-learn. <a href="https://scikit-learn.org/stable/common_pitfalls.html">Common pitfalls and recommended practices</a>.
+      Rozdzielenie przetwarzania treningowego i testowego oraz pipeline’y.</li>
+    <li>imbalanced-learn. <a href="https://imbalanced-learn.org/stable/common_pitfalls.html">Data leakage in resampling</a>.
+      Równoważenie wyłącznie wewnątrz treningu.</li>
+    <li>scikit-learn. <a href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html">Nested versus non-nested cross-validation</a>.</li>
+    <li>Chawla, N. V., Bowyer, K. W., Hall, L. O., Kegelmeyer, W. P. (2002).
+      <a href="https://doi.org/10.1613/jair.953">SMOTE: Synthetic Minority Over-sampling Technique</a>. JAIR, 16, 321–357.</li>
+    <li>Varma, S., Simon, R. (2006). <a href="https://doi.org/10.1186/1471-2105-7-91">Bias in error estimation when using cross-validation for model selection</a>. BMC Bioinformatics, 7, 91.</li>
+  </ol>
+</section>
+</main>
+<footer>Klasyfikacja jakości powietrza · Raport generowany z wyników eksperymentu · {{ manifest.finished_at[:10] }}</footer>
+</body></html>

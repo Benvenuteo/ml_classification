@@ -1,0 +1,41 @@
+name: Verify study
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install numerical and verification stack
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install --no-deps -e .
+      - name: Check code style
+        run: |
+          ruff check src tests scripts
+          ruff format --check src tests scripts
+      - name: Verify data and fold isolation
+        run: python -m pytest -q
+      - name: Run complete smoke analysis
+        run: python -m air_quality run --config configs/smoke.json
+      - name: Verify published results and notebook structure
+        run: |
+          python scripts/verify_outputs.py --output .ci_artifacts --notebook .ci_artifacts/smoke.ipynb
+          python scripts/verify_outputs.py --output reports --notebook notebooks/air_quality_study.ipynb
