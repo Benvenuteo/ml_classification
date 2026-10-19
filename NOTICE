@@ -1,0 +1,12 @@
+Air Quality Classification Study
+
+Dataset attribution:
+"Air Quality and Pollution Assessment" by Mujtaba Mateen (Kaggle: mujtabamatin).
+https://www.kaggle.com/datasets/mujtabamatin/air-quality-and-pollution-assessment
+Kaggle metadata identifies dataset version 2 under the Apache License, Version 2.0.
+The user-supplied CSV is preserved unchanged in data/raw/pollution_dataset.csv.
+The original dataset authorship is not claimed by this project.
+
+The historical project supplied by the repository owner is retained unchanged
+in docs/legacy/original_project.md for provenance. It is superseded by the
+methodology, implementation and results in the current project.

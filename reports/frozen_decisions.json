@@ -1,0 +1,42 @@
+{
+  "status": "frozen_before_holdout_evaluation",
+  "frozen_at": "2026-10-19T11:24:50.644795+00:00",
+  "model_selection_metric": "mean outer macro-F1",
+  "models": {
+    "multiclass": {
+      "name": "hist_boosting",
+      "params": {
+        "model__max_leaf_nodes": 7,
+        "model__learning_rate": 0.05,
+        "model__l2_regularization": 0.0,
+        "model__class_weight": null,
+        "balance": "passthrough"
+      },
+      "nested_macro_f1_mean": 0.9342196587922226,
+      "nested_macro_f1_std": 0.01151680545947545
+    },
+    "binary": {
+      "name": "random_forest",
+      "params": {
+        "model__min_samples_leaf": 3,
+        "model__max_features": "sqrt",
+        "model__class_weight": null,
+        "balance": "passthrough"
+      },
+      "nested_macro_f1_mean": 0.9779156911396745,
+      "nested_macro_f1_std": 0.004304050117649238
+    }
+  },
+  "direct_threshold": {
+    "threshold": 0.31,
+    "objective": "training_nested_oof_f2",
+    "training_oof_f2": 0.9704083319556952,
+    "selection_score_is_optimistic": true
+  },
+  "aggregated_threshold": {
+    "threshold": 0.19,
+    "objective": "training_nested_oof_f2",
+    "training_oof_f2": 0.9716699801192843,
+    "selection_score_is_optimistic": true
+  }
+}

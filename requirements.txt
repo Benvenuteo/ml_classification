@@ -1,0 +1,17 @@
+# Numerical and verification stack used for the published study. Python 3.12 recommended.
+numpy==2.3.5
+pandas==2.2.3
+scipy==1.17.0
+scikit-learn==1.8.0
+imbalanced-learn==0.14.2
+sklearn-compat==0.1.6
+matplotlib==3.10.8
+jinja2==3.1.6
+joblib==1.5.3
+threadpoolctl==3.6.0
+nbformat==5.11.1
+nbclient==0.11.0
+ipykernel==7.4.0
+ipython==9.17.1
+pytest==9.1.1
+ruff==0.17.1
